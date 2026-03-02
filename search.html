@@ -1,0 +1,55 @@
+---
+layout: default
+title: Search
+permalink: /search/
+---
+
+<h1><span><i class="fa fa-search"></i></span>&nbsp;Search in blog posts</h1>
+<input type="text" id="search-input" placeholder="Type text to search..." />
+<br>
+<br>
+
+<div class="search">
+<ul id="search-results"></ul>
+</div>
+
+<script>
+  let idx = null;
+  let posts = [];
+
+  fetch('/search.json')
+    .then(response => response.json())
+    .then(data => {
+      posts = data;
+      idx = lunr(function () {
+        this.ref('url');
+        this.field('title');
+        this.field('content');
+
+        data.forEach(function (doc) {
+          this.add(doc);
+        }, this);
+      });
+    });
+
+  document.getElementById('search-input').addEventListener('input', function () {
+    const query = this.value.trim();
+    const resultsContainer = document.getElementById('search-results');
+    resultsContainer.innerHTML = '';
+
+    if (query && idx) {
+      const results = idx.search(query);
+      results.forEach(function (result) {
+        const item = posts.find(post => post.url === result.ref);
+        if (item) {
+          const li = document.createElement('li');
+          const link = document.createElement('a');
+          link.href = item.url;
+          link.textContent = item.title;
+          li.appendChild(link);
+          resultsContainer.appendChild(li);
+        }
+      });
+    }
+  });
+</script>
